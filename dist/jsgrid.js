@@ -22,8 +22,6 @@
         PAGE_INDEX_PLACEHOLDER = "{pageIndex}",
         PAGE_COUNT_PLACEHOLDER = "{pageCount}",
         ITEM_COUNT_PLACEHOLDER = "{itemCount}",
-        ITEM_INDEX_FROM_PLACEHOLDER = "{itemIndexFrom}",
-        ITEM_INDEX_TO_PLACEHOLDER = "{itemIndexTo}",
 
         EMPTY_HREF = "javascript:void(0);";
 
@@ -65,7 +63,7 @@
 
         this._container = $element;
 
-        this.data = [];
+        this.data = null;
         this.fields = [];
 
         this._editingRow = null;
@@ -429,9 +427,9 @@
                 .append($filterRow)
                 .append($insertRow);
 
-            var $header = this._header = $("<div>").addClass(this.gridHeaderClass)
+            var $header = this._header = $("<div>").append($("<div>").addClass(this.gridHeaderClass)
                 .addClass(this._scrollBarWidth() ? "jsgrid-header-scrollbar" : "")
-                .append($headerGrid);
+                .append($headerGrid));
 
             return $header;
         },
@@ -580,17 +578,19 @@
             var $content = this._content;
             $content.empty();
 
-            if(!this.data.length) {
-                $content.append(this._createNoDataRow());
-                return this;
-            }
+            if (this.data) {
+                if (!this.data.length) {
+                    $content.append(this._createNoDataRow());
+                    return this;
+                }
 
-            var indexFrom = this._loadStrategy.firstDisplayIndex();
-            var indexTo = this._loadStrategy.lastDisplayIndex();
+                var indexFrom = this._loadStrategy.firstDisplayIndex();
+                var indexTo = this._loadStrategy.lastDisplayIndex();
 
-            for(var itemIndex = indexFrom; itemIndex < indexTo; itemIndex++) {
-                var item = this.data[itemIndex];
-                $content.append(this._createRow(item, itemIndex));
+                for (var itemIndex = indexFrom; itemIndex < indexTo; itemIndex++) {
+                    var item = this.data[itemIndex];
+                    $content.append(this._createRow(item, itemIndex));
+                }
             }
         },
 
@@ -790,16 +790,21 @@
             return Math.floor(itemsCount / pageSize) + (itemsCount % pageSize ? 1 : 0);
         },
 
-        _refreshPager: function() {
+        _refreshPager: function () {
             var $pagerContainer = this._pagerContainer;
             $pagerContainer.empty();
 
-            if(this.paging) {
-                $pagerContainer.append(this._createPager());
-            }
+            if (this.data) {
+                if (this.paging) {
+                    $pagerContainer.append(this._createPager());
+                }
 
-            var showPager = this.paging && this._pagesCount() > 1;
-            $pagerContainer.toggle(showPager);
+                var showPager = this.paging && this._pagesCount() > 1;
+                $pagerContainer.toggle(showPager);
+            }
+            else {
+                $pagerContainer.toggle(this.paging);
+            }
         },
 
         _createPager: function() {
@@ -823,8 +828,6 @@
             var pageIndex = this.pageIndex,
                 pageCount = this._pagesCount(),
                 itemCount = this._itemsCount(),
-                itemIndexFrom = ((this.pageIndex - 1) * this.pageSize + 1),
-                itemIndexTo = Math.min((this.pageIndex * this.pageSize), itemCount),
                 pagerParts = this.pagerFormat.split(" ");
 
             return $.map(pagerParts, $.proxy(function(pagerPart) {
@@ -846,10 +849,6 @@
                     result = pageCount;
                 } else if(pagerPart === ITEM_COUNT_PLACEHOLDER) {
                     result = itemCount;
-                } else if (pagerPart === ITEM_INDEX_FROM_PLACEHOLDER) {
-                    result = itemIndexFrom;
-                } else if (pagerPart === ITEM_INDEX_TO_PLACEHOLDER) {
-                    result = itemIndexTo;
                 }
 
                 return $.isArray(result) ? result.concat([" "]) : [result, " "];
@@ -1260,7 +1259,7 @@
 
         _createEditRow: function(item) {
             if($.isFunction(this.editRowRenderer)) {
-                return $(this.renderTemplate(field.editRowRenderer, field, { item: item, itemIndex: this._itemIndex(item) }));
+                return $(this.renderTemplate(this.editRowRenderer, this, { item: item, itemIndex: this._itemIndex(item) }));
             }
 
             var $result = $("<tr>").addClass(this.editRowClass);

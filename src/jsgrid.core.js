@@ -57,7 +57,7 @@
 
         this._container = $element;
 
-        this.data = [];
+        this.data = null;
         this.fields = [];
 
         this._editingRow = null;
@@ -572,17 +572,19 @@
             var $content = this._content;
             $content.empty();
 
-            if(!this.data.length) {
-                $content.append(this._createNoDataRow());
-                return this;
-            }
+            if (this.data) {
+                if (!this.data.length) {
+                    $content.append(this._createNoDataRow());
+                    return this;
+                }
 
-            var indexFrom = this._loadStrategy.firstDisplayIndex();
-            var indexTo = this._loadStrategy.lastDisplayIndex();
+                var indexFrom = this._loadStrategy.firstDisplayIndex();
+                var indexTo = this._loadStrategy.lastDisplayIndex();
 
-            for(var itemIndex = indexFrom; itemIndex < indexTo; itemIndex++) {
-                var item = this.data[itemIndex];
-                $content.append(this._createRow(item, itemIndex));
+                for (var itemIndex = indexFrom; itemIndex < indexTo; itemIndex++) {
+                    var item = this.data[itemIndex];
+                    $content.append(this._createRow(item, itemIndex));
+                }
             }
         },
 
@@ -782,16 +784,21 @@
             return Math.floor(itemsCount / pageSize) + (itemsCount % pageSize ? 1 : 0);
         },
 
-        _refreshPager: function() {
+        _refreshPager: function () {
             var $pagerContainer = this._pagerContainer;
             $pagerContainer.empty();
 
-            if(this.paging) {
-                $pagerContainer.append(this._createPager());
-            }
+            if (this.data) {
+                if (this.paging) {
+                    $pagerContainer.append(this._createPager());
+                }
 
-            var showPager = this.paging && this._pagesCount() > 1;
-            $pagerContainer.toggle(showPager);
+                var showPager = this.paging && this._pagesCount() > 1;
+                $pagerContainer.toggle(showPager);
+            }
+            else {
+                $pagerContainer.toggle(this.paging);
+            }
         },
 
         _createPager: function() {
