@@ -421,9 +421,9 @@
                 .append($filterRow)
                 .append($insertRow);
 
-            var $header = this._header = $("<div>").addClass(this.gridHeaderClass)
+            var $header = this._header = $("<div>").append($("<div>").addClass(this.gridHeaderClass)
                 .addClass(this._scrollBarWidth() ? "jsgrid-header-scrollbar" : "")
-                .append($headerGrid);
+                .append($headerGrid));
 
             return $header;
         },
